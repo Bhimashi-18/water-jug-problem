@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minimax Tic-Tac-Toe</title>
+<style>
+body{
+    font-family:Arial,sans-serif;
+    text-align:center;
+    background:#0f172a;
+    color:white;
+}
+.board{
+    display:grid;
+    grid-template-columns:repeat(3,100px);
+    gap:5px;
+    justify-content:center;
+    margin:20px auto;
+}
+.cell{
+    width:100px;
+    height:100px;
+    font-size:40px;
+    font-weight:bold;
+    cursor:pointer;
+    background:#1e293b;
+    color:white;
+    border:none;
+}
+button{
+    padding:10px 20px;
+    margin:10px;
+}
+</style>
+</head>
+<body>
+
+<h1>Tic-Tac-Toe Minimax AI</h1>
+<p id="status">Your Turn (X)</p>
+
+<div class="board" id="board"></div>
+
+<button onclick="resetGame()">Reset Game</button>
+
+<p>Evaluated States: <span id="states">0</span></p>
+
+<script>
+let board = Array(9).fill(null);
+let evaluations = 0;
+
+function createBoard(){
+    const gameBoard = document.getElementById("board");
+    gameBoard.innerHTML = "";
+
+    board.forEach((cell,index)=>{
+        const btn = document.createElement("button");
+        btn.className = "cell";
+        btn.textContent = cell || "";
+        btn.onclick = ()=>playerMove(index);
+        gameBoard.appendChild(btn);
+    });
+}
+
+function checkWinner(b){
+    const wins=[
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+    ];
+
+    for(let line of wins){
+        let [a,b1,c]=line;
+        if(b[a] && b[a]===b[b1] && b[a]===b[c])
+            return b[a];
+    }
+
+    if(b.every(x=>x!==null)) return "Tie";
+    return null;
+}
+
+function evaluateBoard(b){
+    const winner = checkWinner(b);
+
+    if(winner==="O") return 10;
+    if(winner==="X") return -10;
+    return 0;
+}
+
+function minimax(b,depth,isMax){
+    evaluations++;
+
+    const score = evaluateBoard(b);
+
+    if(score===10) return score-depth;
+    if(score===-10) return score+depth;
+    if(b.every(cell=>cell!==null)) return 0;
+
+    if(isMax){
+        let best=-Infinity;
+
+        for(let i=0;i<9;i++){
+            if(b[i]===null){
+                b[i]="O";
+                best=Math.max(best,minimax(b,depth+1,false));
+                b[i]=null;
+            }
+        }
+        return best;
+    }else{
+        let best=Infinity;
+
+        for(let i=0;i<9;i++){
+            if(b[i]===null){
+                b[i]="X";
+                best=Math.min(best,minimax(b,depth+1,true));
+                b[i]=null;
+            }
+        }
+        return best;
+    }
+}
+
+function aiMove(){
+    let bestVal=-Infinity;
+    let bestMove=-1;
+
+    evaluations=0;
+
+    for(let i=0;i<9;i++){
+        if(board[i]===null){
+            board[i]="O";
+
+            let moveVal=minimax(board,0,false);
+
+            board[i]=null;
+
+            if(moveVal>bestVal){
+                bestVal=moveVal;
+                bestMove=i;
+            }
+        }
+    }
+
+    board[bestMove]="O";
+
+    document.getElementById("states").textContent=evaluations;
+
+    const winner=checkWinner(board);
+
+    if(winner){
+        endGame(winner);
+    }else{
+        document.getElementById("status").textContent="Your Turn (X)";
+    }
+
+    createBoard();
+}
+
+function playerMove(index){
+    if(board[index]!==null || checkWinner(board)) return;
+
+    board[index]="X";
+    createBoard();
+
+    let winner=checkWinner(board);
+
+    if(winner){
+        endGame(winner);
+        return;
+    }
+
+    document.getElementById("status").textContent="AI Thinking...";
+
+    setTimeout(aiMove,300);
+}
+
+function endGame(winner){
+    if(winner==="X")
+        document.getElementById("status").textContent="🎉 You Win!";
+    else if(winner==="O")
+        document.getElementById("status").textContent="🤖 AI Wins!";
+    else
+        document.getElementById("status").textContent="🤝 Draw!";
+}
+
+function resetGame(){
+    board=Array(9).fill(null);
+    document.getElementById("status").textContent="Your Turn (X)";
+    document.getElementById("states").textContent="0";
+    createBoard();
+}
+
+createBoard();
+</script>
+
+</body>
+</html>
